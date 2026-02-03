@@ -1,1 +1,17 @@
-s
+# Build output
+/target/
+/test-output/
+
+# IDE specific
+/.idea/
+/.vscode/
+
+# Logs
+*.log
+
+# Environment / local setup
+/venv/
+
+# OS files
+.DS_Store
+Thumbs.db

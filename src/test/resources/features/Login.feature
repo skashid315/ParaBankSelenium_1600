@@ -2,17 +2,31 @@ Feature: ParaBank Login Module
   As a user of ParaBank
   I want to log in to my account
   So that I can access my banking services
+  # ============================================================================
+  # SCENARIOS WITH REGISTRATION + LOGIN FLOW (Using dynamically generated credentials)
+  # ============================================================================
+  # Background:
+  #   Given the user is on the ParaBank login page
 
-  Background:
-    Given the user is on the ParaBank login page
-
-  @Smoke @Regression @HighPriority @first
-  Scenario: AUTH-001 - Successful login with valid credentials
-    When the user enters username "testuser"
-    And the user enters password "Test@123"
+  @Smoke @Regression @HighPriority @RequiresRegistration @Register
+  Scenario: AUTH-001 - Successful login after registration with valid credentials
+    Given a new user is registered with unique credentials
+    And the user navigates to login page after registration
+    When the user enters the registered username
+    And the user enters the registered password
     And the user clicks the Login button
     Then the user should be redirected to the Accounts Overview page
     And the Accounts Overview header should be displayed
+
+  @Smoke @Regression @Functional @HighPriority @RequiresRegistration
+  Scenario: AUTH-013 - Successful logout after registration and login
+    Given the user is logged in with newly registered credentials
+    When the user clicks the Log Out link
+    Then the user should be redirected to the login page
+    And the Customer Login header should be displayed
+  # ============================================================================
+  # SCENARIOS WITH STATIC CREDENTIALS (For negative/edge case testing)
+  # ============================================================================
 
   @Regression @Negative @HighPriority
   Scenario: AUTH-002 - Login with invalid password
@@ -69,10 +83,3 @@ Feature: ParaBank Login Module
     When the user checks the password field type
     Then the password field should have type "password"
     And the password characters should be masked
-
-  @Smoke @Regression @Functional @HighPriority
-  Scenario: AUTH-013 - Successful logout and session termination
-    Given the user is logged in with valid credentials
-    When the user clicks the Log Out link
-    Then the user should be redirected to the login page
-    And the Customer Login header should be displayed

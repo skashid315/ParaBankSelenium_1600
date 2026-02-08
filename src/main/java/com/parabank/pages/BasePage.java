@@ -69,4 +69,52 @@ public class BasePage {
             throw e;
         }
     }
+
+    // ==================== Universal Browser Control Methods ====================
+
+    /**
+     * Universal method to close the browser and quit the WebDriver.
+     * Can be called from any page class.
+     */
+    public void closeBrowser() {
+        try {
+            if (driver != null) {
+                driver.quit();
+                logger.info("Browser closed successfully");
+            }
+        } catch (Exception e) {
+            logger.error("Error while closing browser: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Universal method to close the current browser window/tab only.
+     * The browser session remains active.
+     */
+    public void closeCurrentWindow() {
+        try {
+            if (driver != null) {
+                driver.close();
+                logger.info("Current browser window/tab closed");
+            }
+        } catch (Exception e) {
+            logger.error("Error while closing current window: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Universal method to check if browser is still open.
+     * @return true if browser session is active, false otherwise
+     */
+    public boolean isBrowserOpen() {
+        try {
+            if (driver == null) {
+                return false;
+            }
+            driver.getTitle();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

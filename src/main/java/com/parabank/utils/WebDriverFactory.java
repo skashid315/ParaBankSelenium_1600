@@ -10,7 +10,10 @@ import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Duration;
 
 public class WebDriverFactory {
@@ -25,7 +28,25 @@ public class WebDriverFactory {
         driver.set(driverInstance);
     }
 
+    /**
+     * Initialize WebDriver - supports both Local and Grid modes
+     * 
+     * @param browserName browser name (chrome, firefox, edge)
+     * @return WebDriver instance
+     */
     public static WebDriver initializeDriver(String browserName) {
+        // Check if Grid mode is enabled
+        if (ConfigReader.isGridModeEnabled()) {
+            return initializeRemoteDriver(browserName);
+        } else {
+            return initializeLocalDriver(browserName);
+        }
+    }
+
+    /**
+     * Initialize Local WebDriver
+     */
+    private static WebDriver initializeLocalDriver(String browserName) {
         WebDriver webDriver = null;
 
         try {
@@ -36,7 +57,7 @@ public class WebDriverFactory {
                     chromeOptions.addArguments("--start-maximized");
                     chromeOptions.addArguments("--disable-notifications");
                     webDriver = new ChromeDriver(chromeOptions);
-                    logger.info("Chrome browser initialized");
+                    logger.info("Chrome browser initialized (Local Mode)");
                     break;
 
                 case "firefox":
@@ -44,7 +65,7 @@ public class WebDriverFactory {
                     FirefoxOptions firefoxOptions = new FirefoxOptions();
                     firefoxOptions.addArguments("--start-maximized");
                     webDriver = new FirefoxDriver(firefoxOptions);
-                    logger.info("Firefox browser initialized");
+                    logger.info("Firefox browser initialized (Local Mode)");
                     break;
 
                 case "edge":
@@ -53,7 +74,7 @@ public class WebDriverFactory {
                     edgeOptions.addArguments("--start-maximized");
                     edgeOptions.addArguments("--disable-notifications");
                     webDriver = new EdgeDriver(edgeOptions);
-                    logger.info("Edge browser initialized");
+                    logger.info("Edge browser initialized (Local Mode)");
                     break;
 
                 default:
@@ -70,6 +91,64 @@ public class WebDriverFactory {
         } catch (Exception e) {
             logger.error("Failed to initialize browser: " + e.getMessage());
             throw new RuntimeException("Browser initialization failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Initialize Remote WebDriver for Selenium Grid
+     */
+    private static WebDriver initializeRemoteDriver(String browserName) {
+        WebDriver webDriver = null;
+        String gridUrl = ConfigReader.getGridUrl();
+        
+        try {
+            URL remoteAddress = new URL(gridUrl);
+            logger.info("Connecting to Selenium Grid at: " + gridUrl);
+
+            switch (browserName.toLowerCase()) {
+                case "chrome":
+                    ChromeOptions chromeOptions = new ChromeOptions();
+                    chromeOptions.addArguments("--start-maximized");
+                    chromeOptions.addArguments("--disable-notifications");
+                    chromeOptions.addArguments("--no-sandbox");
+                    chromeOptions.addArguments("--disable-dev-shm-usage");
+                    webDriver = new RemoteWebDriver(remoteAddress, chromeOptions);
+                    logger.info("Chrome browser initialized (Grid Mode)");
+                    break;
+
+                case "firefox":
+                    FirefoxOptions firefoxOptions = new FirefoxOptions();
+                    firefoxOptions.addArguments("--start-maximized");
+                    webDriver = new RemoteWebDriver(remoteAddress, firefoxOptions);
+                    logger.info("Firefox browser initialized (Grid Mode)");
+                    break;
+
+                case "edge":
+                    EdgeOptions edgeOptions = new EdgeOptions();
+                    edgeOptions.addArguments("--start-maximized");
+                    edgeOptions.addArguments("--disable-notifications");
+                    webDriver = new RemoteWebDriver(remoteAddress, edgeOptions);
+                    logger.info("Edge browser initialized (Grid Mode)");
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unsupported browser for Grid: " + browserName);
+            }
+
+            webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(ConfigReader.getImplicitWait()));
+            webDriver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(ConfigReader.getPageLoadTimeout()));
+            webDriver.manage().deleteAllCookies();
+
+            setDriver(webDriver);
+            logger.info("Remote WebDriver created successfully on Grid");
+            return webDriver;
+
+        } catch (MalformedURLException e) {
+            logger.error("Invalid Grid URL: " + gridUrl);
+            throw new RuntimeException("Invalid Selenium Grid URL: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Failed to connect to Selenium Grid: " + e.getMessage());
+            throw new RuntimeException("Grid connection failed: " + e.getMessage());
         }
     }
 

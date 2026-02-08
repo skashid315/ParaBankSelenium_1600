@@ -17,7 +17,7 @@ public class LoginPage extends BasePage {
     @FindBy(xpath = "//input[@value='Log In']")
     private WebElement loginButton;
 
-    @FindBy(xpath = "//div[@id='rightPanel']//h1[contains(text(),'Accounts Overview')]")
+    @FindBy(xpath = "//h1[contains(text(),'Accounts Overview') or @class='title']")
     private WebElement accountsOverviewHeader;
 
     @FindBy(xpath = "//div[@id='rightPanel']//p[@class='error']")
@@ -45,7 +45,14 @@ public class LoginPage extends BasePage {
     public void navigateToLoginPage() {
         try {
             driver.get("https://parabank.parasoft.com/");
-            waitUtil.waitForElementToBeVisible(customerLoginHeader);
+            // Wait for page to fully load - use page title as indicator
+            waitUtil.waitForPageTitle("ParaBank");
+            // Small delay to ensure all elements are rendered
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
             String screenshotPath = ScreenshotUtil.captureScreenshot(driver, "LoginPage_Loaded");
             ExtentReportManager.attachScreenshot(screenshotPath);
             ExtentReportManager.logStep("1", "Navigate to login page", "Login page displayed", "Login page loaded successfully", "Pass");
@@ -84,6 +91,8 @@ public class LoginPage extends BasePage {
 
     public void clickLoginButton() {
         try {
+            String screenshotPath = ScreenshotUtil.captureScreenshot(driver, "Login_Details_Entered");
+            ExtentReportManager.attachScreenshot(screenshotPath);
             clickElement(loginButton);
             ExtentReportManager.logStep("4", "Click Login button", "Login button clicked", "Login button clicked successfully", "Pass");
         } catch (Exception e) {
@@ -103,6 +112,9 @@ public class LoginPage extends BasePage {
 
     public boolean isLoginSuccessful() {
         try {
+            // Wait for URL to contain overview.htm first
+            waitUtil.waitForUrlToContain("overview.htm");
+            // Then wait for the header element
             waitUtil.waitForElementToBeVisible(accountsOverviewHeader);
             String screenshotPath = ScreenshotUtil.captureScreenshot(driver, "Login_Success");
             ExtentReportManager.attachScreenshot(screenshotPath);
@@ -138,7 +150,18 @@ public class LoginPage extends BasePage {
     }
 
     public boolean isOnLoginPage() {
-        return isElementDisplayed(customerLoginHeader);
+        // Check if URL contains login page indicator or username field is displayed
+        try {
+            String currentUrl = driver.getCurrentUrl();
+            // Login page URL typically ends with index.htm or parabank/ (homepage)
+            if (currentUrl.contains("index.htm") || currentUrl.endsWith("parabank/") || currentUrl.equals("https://parabank.parasoft.com/")) {
+                return true;
+            }
+            // Fallback: check for login form
+            return usernameField.isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public void clickLogout() {

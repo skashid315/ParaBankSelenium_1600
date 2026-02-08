@@ -50,4 +50,22 @@ public class ConfigReader {
     public static int getPageLoadTimeout() {
         return Integer.parseInt(getProperty("page.load.timeout"));
     }
+
+    /**
+     * Check if Selenium Grid mode is enabled
+     * @return true if grid.enabled=true in config
+     */
+    public static boolean isGridModeEnabled() {
+        String gridEnabled = getProperty("grid.enabled");
+        return "true".equalsIgnoreCase(gridEnabled);
+    }
+
+    /**
+     * Get Selenium Grid Hub URL
+     * @return Grid URL (default: http://localhost:4444/wd/hub)
+     */
+    public static String getGridUrl() {
+        String gridUrl = getProperty("grid.url");
+        return gridUrl != null ? gridUrl : "http://localhost:4444/wd/hub";
+    }
 }
